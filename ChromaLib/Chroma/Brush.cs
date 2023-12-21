@@ -1,6 +1,3 @@
-using Google.Protobuf.WellKnownTypes;
-using System.Xml.Linq;
-
 namespace Chroma;
 
 public class Brush
@@ -42,7 +39,7 @@ public class Brush
         this._condition += $" > {(compared is string ? "'"+ compared+"'" : compared)}" ; //@ChromaBrush{_parameters.Count()}";
         return this;
     }
-    public Brush GreatherThanOrEquals(object compared)
+    public Brush GreaterThanOrEquals(object compared)
     {
        // _parameters.Add(($"@ChromaBrush{_parameters.Count() + 1}", compared));
         this._condition += $" >= {(compared is string ? "'"+ compared+"'" : compared)}" ; //@ChromaBrush{_parameters.Count()}";
@@ -54,7 +51,7 @@ public class Brush
         this._condition += $" < {(compared is string ? "'"+ compared+"'" : compared)}" ; //@ChromaBrush{_parameters.Count()}";
         return this;
     }
-    public Brush LessThanOrEqual(object compared)
+    public Brush LessThanOrEquals(object compared)
     {
        // _parameters.Add(($"@ChromaBrush{_parameters.Count() + 1}", compared));
         this._condition += $" <= {(compared is string ? "'"+ compared+"'" : compared)}" ; //@ChromaBrush{_parameters.Count()}";
@@ -111,27 +108,30 @@ public class Brush
 
     public Brush PrimaryEquals<T>(object compared)
     {
-        T temp = default(T);
         bool flag = false;
         string name = "";
-        foreach (System.Reflection.PropertyInfo property in temp.GetType().GetProperties())
+        foreach (System.Reflection.PropertyInfo property in typeof(T).GetProperties())
         {
-            name = property.Name;
-
+            if(Chroma.ShowQueries) Console.WriteLine(property);
             foreach (System.Attribute attribute in property.GetCustomAttributes(true))
             {
                 if (attribute is PrimaryAttribute)
                 {
                     flag = true;
+                    name = property.Name;
                 }
+            }
+            
+            if (!flag) continue;
+            foreach(System.Attribute attribute in property.GetCustomAttributes(true))
+            {
 
-                else if (attribute is NameAttribute nattr)
+                if (attribute is NameAttribute nattr)
                 {
                     name = nattr.name;
                 }
-
             }
-            if (flag) break;
+            break;
         }
         this._condition += $" WHERE {name} = {(compared is string ? "'" + compared + "'" : compared)}";
         return this;

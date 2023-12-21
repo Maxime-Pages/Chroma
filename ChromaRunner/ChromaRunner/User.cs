@@ -3,7 +3,7 @@ namespace ChromaRunner;
 using Chroma;
 
 [Name("Users")]
-public class User : Hue
+public class User
 {
     [Primary]
     public int id { get; set; }
@@ -18,29 +18,29 @@ public class User : Hue
     [Nullable]
     public int? points { get; set; }
 
-    public User(int id, string name, string gender, int? phone = null)
+    public User(int id, string firstname, string gender, int? points = null)
     {
         this.id = id;
-        this.name = name;
+        this.firstname = firstname;
         this.gender = gender;
-        this.phone = phone;
+        this.points = points;
     }
-    public User(string name, string gender, int? phone = null)
+    public User(string firstname, string gender, int? points = null)
     {
         this.id = -1;
-        this.name = name;
+        this.firstname = firstname;
         this.gender = gender;
-        this.phone = phone;
+        this.points = points;
     }
     public User() 
     {
         this.id = -1;
-        this.name = "";
+        this.firstname = "";
         this.gender = "";
-        this.phone = null;
+        this.points = null;
     }
     public override string ToString()
     {
-        return $"ID : {id}; Name : {name}; Gender : {gender}";
+        return $"ID : {id}; Name : {firstname}; Gender : {gender}; Points : {(points is null ? "Null" : points.ToString())}";
     }
 }

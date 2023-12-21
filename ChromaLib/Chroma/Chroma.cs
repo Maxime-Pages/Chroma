@@ -17,6 +17,7 @@ using Google.Protobuf.WellKnownTypes;
 public class Chroma
 {
     public static DbConnection conn;
+    public static bool ShowQueries = false;
 
     public Chroma(DbConnection dbconnection)
     {
@@ -66,9 +67,19 @@ public class Chroma
 
             foreach(PropertyInfo property in typeof(T).GetProperties())
             {
-                if (property.Name.ToLower() == name && !(value is DBNull))
+                if (value is DBNull) continue;
+                if (property.Name.ToLower() == name)
                 {
                     property.SetValue(result, value, null);
+                    continue;
+                } 
+                foreach (System.Attribute attribute in property.GetCustomAttributes(true))
+                {
+                    if (attribute is NameAttribute attr && attr.name == name)
+                    {
+                        property.SetValue(result, value, null);
+                        break;
+                    }
                 }
             }
         }
@@ -94,7 +105,7 @@ public class Chroma
                     cmd.Parameters.Add(dbparam);
                 }
             }
-            Console.WriteLine(cmd.CommandText);
+            if (ShowQueries) Console.WriteLine(cmd.CommandText);
             using (DbDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
@@ -126,6 +137,7 @@ public class Chroma
                     cmd.Parameters.Add(dbparam);
                 }
             }
+            if (ShowQueries) Console.WriteLine(cmd.CommandText);
             cmd.ExecuteNonQuery();
         }
     }
@@ -160,7 +172,7 @@ public class Chroma
                 {
                     if (!(property.GetValue(hue) is String str)) throw new Exception($"Field {property.Name} with StringSize attribute is not a String.");
 
-                    if (sattr.size <= str.Length) throw new Exception($"Field {property.Name} with max size {sattr.size} sent with size {str.Length}.");
+                    if (sattr.size < str.Length) throw new Exception($"Field {property.Name} with max size {sattr.size} sent with size {str.Length}.");
 
                 }
 
@@ -217,7 +229,7 @@ public class Chroma
                     {
                         if (!(property.GetValue(hue) is String str)) throw new Exception($"Field {property.Name} with StringSize attribute is not a String.");
 
-                        if (sattr.size <= str.Length) throw new Exception($"Field {property.Name} with max size {sattr.size} sent with size {str.Length}.");
+                        if (sattr.size < str.Length) throw new Exception($"Field {property.Name} with max size {sattr.size} sent with size {str.Length}.");
 
                     }
 
@@ -243,9 +255,8 @@ public class Chroma
 
     public List<T> Draw<T>(Brush? brush = null)
     {
-        T temp = default(T);
-        string palette = temp.GetType().Name;
-        foreach (System.Attribute attribute in temp.GetType().GetCustomAttributes())
+        string palette = typeof(T).Name;
+        foreach (System.Attribute attribute in typeof(T).GetCustomAttributes())
         {
             if (attribute is NameAttribute attr)
             {
@@ -292,7 +303,7 @@ public class Chroma
                 {
                     if (!(property.GetValue(hue) is String str)) throw new Exception($"Field {property.Name} with StringSize attribute is not a String.");
 
-                    if (sattr.size <= str.Length) throw new Exception($"Field {property.Name} with max size {sattr.size} sent with size {str.Length}.");
+                    if (sattr.size < str.Length) throw new Exception($"Field {property.Name} with max size {sattr.size} sent with size {str.Length}.");
 
                 }
 
@@ -312,20 +323,20 @@ public class Chroma
         Chroma.NonQuery($"UPDATE {palette} SET {string.Join(", ",operations)} {(brush is null ? new Brush().PrimaryEquals<object?>(primary).condition : brush.condition)};", parameters);
     }
 
-    public void Delete<T>(T hue, Brush? brush = null)
+    public void Delete<T>(Brush? brush = null)
     {
         string name;
         string palette = typeof(T).Name;
         object? primary = null;
         bool flag = false;
-        foreach (System.Attribute attribute in hue.GetType().GetCustomAttributes(true))
+        foreach (System.Attribute attribute in typeof(T).GetCustomAttributes(true))
         {
             if (attribute is NameAttribute attr)
             {
                 palette = attr.name;
             }
         }
-        foreach (System.Reflection.PropertyInfo property in hue.GetType().GetProperties())
+        foreach (System.Reflection.PropertyInfo property in typeof(T).GetType().GetProperties())
         {
             name = property.Name;
 
